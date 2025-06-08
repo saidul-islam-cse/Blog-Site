@@ -1,0 +1,107 @@
+{% extends "blog/base.html" %}
+{% block title %}All Blog Posts{% endblock %}
+
+{% block content %}
+<form method="get" class="mb-4">
+  <div class="input-group">
+    <input type="text" name="q" class="form-control" placeholder="Search posts..." value="{{ search_query }}">
+    {% if categoryQ %}<input type="hidden" name="category" value="{{ categoryQ }}">{% endif %}
+    {% if tagQ %}<input type="hidden" name="tag" value="{{ tagQ }}">{% endif %}
+    <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+  </div>
+</form>
+
+<div class="row g-4">
+    <!-- Blog Posts -->
+    <div class="col-lg-8">
+        {% for post in page_obj %}
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <h3 class="card-title">{{ post.title }}</h3>
+                <p class="text-muted mb-2">
+                    <i class="bi bi-person"></i> {{ post.author }} &middot;
+                    <i class="bi bi-clock"></i> {{ post.created_at }}
+                </p>
+                <p class="card-text">{{ post.content|truncatewords:40 |safe }}</p>
+                <a href="{% url 'post_details' post.id %}" class="btn btn-outline-primary btn-sm">Read More</a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="alert alert-info">No blog posts found.</div>
+        {% endfor %}
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if categoryQ %}category={{ categoryQ }}&{% endif %}{% if tagQ %}tag={{ tagQ }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% else %}
+                        <li class="page-item"><a class="page-link" href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if categoryQ %}category={{ categoryQ }}&{% endif %}{% if tagQ %}tag={{ tagQ }}&{% endif %}page={{ num }}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if categoryQ %}category={{ categoryQ }}&{% endif %}{% if tagQ %}tag={{ tagQ }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Categories -->
+        <div class="mb-4">
+            <h5 class="border-bottom pb-2">📂 Categories</h5>
+            <div class="list-group">
+                <a href="{% url 'post_list' %}" class="list-group-item list-group-item-action {% if not request.GET.category %}active{% endif %}">
+                    All Categories
+                </a>
+                {% for category in categories %}
+                <a href="?category={{ category.name }}{% if search_query %}&q={{ search_query }}{% endif %}{% if tagQ %}&tag={{ tagQ }}{% endif %}" 
+                   class="list-group-item list-group-item-action {% if request.GET.category == category.name %}active{% endif %}">
+                    {{ category.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Tags -->
+        <div>
+            <h5 class="border-bottom pb-2">🏷️ Tags</h5>
+            <div class="d-flex flex-wrap gap-2 mt-2">
+                <a href="{% url 'post_list' %}" class="badge rounded-pill bg-dark text-light text-decoration-none px-3 py-2 {% if not request.GET.tag %}active{% endif %}">
+                    All Tags
+                </a>
+                {% for tag in tags %}
+                <a href="?tag={{ tag.name }}"
+                    class="badge rounded-pill text-decoration-none px-3 py-2
+                            {% if request.GET.tag|default_if_none:""|lower == tag.name|lower %}
+                                bg-primary text-light
+                            {% else %}
+                                bg-light text-dark
+                            {% endif %}">
+                        {{ tag.name }}
+                </a>
+
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
